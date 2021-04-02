@@ -24,8 +24,14 @@ module {{moduleName}}
 {{#allParams}}{{^required}}    # @option opts [{{{dataType}}}] :{{paramName}} {{description}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
 {{/required}}{{/allParams}}    # @return [{{#returnType}}{{{returnType}}}{{/returnType}}{{^returnType}}nil{{/returnType}}]
     def {{operationId}}({{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}opts = {})
-      {{#returnType}}data, _status_code, _headers = {{/returnType}}{{operationId}}_with_http_info({{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}opts)
-      {{#returnType}}data{{/returnType}}{{^returnType}}nil{{/returnType}}
+      if block_given?
+        {{operationId}}_with_http_info({{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}opts) do |{{#returnType}}data, _status_code, _headers = {{/returnType}}|
+          yield {{#returnType}}data{{/returnType}}{{^returnType}}nil{{/returnType}}
+        end
+      else
+        {{#returnType}}data, _status_code, _headers = {{/returnType}}{{operationId}}_with_http_info({{#allParams}}{{#required}}{{paramName}}, {{/required}}{{/allParams}}opts)
+        {{#returnType}}data{{/returnType}}{{^returnType}}nil{{/returnType}}
+      end
     end
 
     {{#summary}}
@@ -174,17 +180,29 @@ module {{moduleName}}
       post_body = @api_client.object_to_http_body({{#required}}{{{paramName}}}{{/required}}{{^required}}opts[:'{{{paramName}}}']{{/required}})
       {{/bodyParam}}
       auth_names = [{{#authMethods}}'{{name}}'{{#hasMore}}, {{/hasMore}}{{/authMethods}}]
-      data, status_code, headers = @api_client.call_api(:{{httpMethod}}, local_var_path,
-        :header_params => header_params,
-        :query_params => query_params,
-        :form_params => form_params,
-        :body => post_body,
-        :auth_names => auth_names{{#returnType}},
-        :return_type => '{{{returnType}}}'{{/returnType}})
-      if @api_client.config.debugging
-        @api_client.config.logger.debug "API called: {{classname}}#{{operationId}}\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+      if block_given?
+        @api_client.call_api(:{{httpMethod}}, local_var_path,
+          :header_params => header_params,
+          :query_params => query_params,
+          :form_params => form_params,
+          :body => post_body,
+          :auth_names => auth_names{{#returnType}},
+          :return_type => '{{{returnType}}}'{{/returnType}}) do |data, status_code, headers|
+          yield data, status_code, headers
+        end
+      else
+        data, status_code, headers = @api_client.call_api(:{{httpMethod}}, local_var_path,
+          :header_params => header_params,
+          :query_params => query_params,
+          :form_params => form_params,
+          :body => post_body,
+          :auth_names => auth_names{{#returnType}},
+          :return_type => '{{{returnType}}}'{{/returnType}})
+        if @api_client.config.debugging
+          @api_client.config.logger.debug "API called: {{classname}}#{{operationId}}\nData: #{data.inspect}\nStatus code: #{status_code}\nHeaders: #{headers}"
+        end
+        return data, status_code, headers
       end
-      return data, status_code, headers
     end
 {{/operation}}
   end

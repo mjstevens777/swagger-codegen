@@ -40,8 +40,19 @@ module {{moduleName}}
     #   the data deserialized from response body (could be nil), response status code and response headers.
     def call_api(http_method, path, opts = {})
       request = build_request(http_method, path, opts)
-      response = request.run
+      if block_given?
+        request.on_complete do |response|
+          data, status_code, headers = handle_response(response, opts)
+          yield data, status_code, headers
+        end
+        return request
+      else
+        response = request.run
+        data, status_code, headers = handle_response(response)
+        return data, status_code, headers
+    end
 
+    def handle_response(response, opts)
       if @config.debugging
         @config.logger.debug "HTTP response body ~BEGIN~\n#{response.body}\n~END~\n"
       end
